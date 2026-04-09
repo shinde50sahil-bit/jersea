@@ -1,0 +1,10 @@
+.next
+node_modules
+out
+dist
+coverage
+*.log
+*.pid
+*.tsbuildinfo
+.codex-logs
+backend/.env
