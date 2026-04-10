@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 const easeFlow = [0.25, 0.1, 0.25, 1];
 const tickerText =
@@ -37,13 +36,10 @@ export default function Hero() {
         <div className="mx-auto flex w-full max-w-7xl items-start justify-between">
           <div className="rounded-2xl border border-white/12 bg-black/50 p-2 backdrop-blur-md">
             <div className="relative h-[76px] w-[132px] overflow-hidden rounded-xl sm:h-[94px] sm:w-[164px] lg:h-[106px] lg:w-[184px]">
-              <Image
+              <img
                 src="/jersey_logo.png"
                 alt="Jersea official logo"
-                fill
-                priority
-                sizes="(max-width: 640px) 132px, (max-width: 1024px) 164px, 184px"
-                className="object-cover object-[center_54%]"
+                className="h-full w-full object-cover object-[center_54%]"
               />
             </div>
           </div>
