@@ -38,17 +38,7 @@ export default function ProductCard({
     : null;
 
   return (
-    <motion.article
-      variants={{
-        hidden: { opacity: 0, y: 24 },
-        show: {
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.58, ease: easeFlow }
-        }
-      }}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-jersea-surface transition-colors duration-300 hover:border-jersea-neonBlue/60"
-    >
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-jersea-surface transition-colors duration-300 hover:border-jersea-neonBlue/60">
       <Link href={productHref} className="block">
         <div className="relative aspect-[4/4.55] overflow-hidden">
           <img
@@ -173,6 +163,6 @@ export default function ProductCard({
           </motion.button>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
