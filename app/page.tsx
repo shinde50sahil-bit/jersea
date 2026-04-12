@@ -179,7 +179,7 @@ export default function HomePage() {
       return categoryMatch && sizeMatch;
     });
 
-    return list.sort((first, second) => {
+    return [...list].sort((first, second) => {
       if (sortBy === "Price") {
         return first.price - second.price;
       }

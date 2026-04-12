@@ -17,6 +17,8 @@ export default function ProductGrid({
   addingProductId,
   onAddToCart
 }: ProductGridProps) {
+  const animationKey = products.map((product) => product.id).join("-");
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -27,6 +29,7 @@ export default function ProductGrid({
       </div>
 
       <motion.div
+        key={animationKey}
         variants={{
           hidden: { opacity: 0 },
           show: {
@@ -39,8 +42,7 @@ export default function ProductGrid({
           }
         }}
         initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-100px" }}
+        animate="show"
         className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:gap-4"
       >
         {products.map((product) => (
