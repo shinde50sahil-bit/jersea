@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Product, ProductSize } from "@/types/product";
@@ -22,11 +22,20 @@ export default function ProductCard({
   const [selectedSize, setSelectedSize] = useState<ProductSize>(
     product.sizes[0] || "M"
   );
-  const productImageSrc = resolveImageUrl(product.image);
+  const [imageSrc, setImageSrc] = useState(resolveImageUrl(product.image));
   const productHref = `/products/${product.slug || product.id}`;
-  const galleryPreview = Array.from(
-    new Set([product.image, ...(product.gallery || [])].filter(Boolean))
-  ).slice(0, 4);
+  const galleryPreview = useMemo(
+    () =>
+      Array.from(
+        new Set([product.image, ...(product.gallery || [])].filter(Boolean))
+      ).slice(0, 4),
+    [product.gallery, product.image]
+  );
+  useEffect(() => {
+    setSelectedSize(product.sizes[0] || "M");
+    setImageSrc(resolveImageUrl(product.image));
+  }, [product.id, product.image, product.sizes]);
+
   const hasDiscount =
     Number(product.compareAtPrice || 0) > Number(product.price || 0);
   const discountPercent = hasDiscount
@@ -42,10 +51,11 @@ export default function ProductCard({
       <Link href={productHref} className="block">
         <div className="relative aspect-[4/4.55] overflow-hidden">
           <img
-            src={productImageSrc}
+            src={imageSrc}
             alt={product.name}
             loading="lazy"
             className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-105"
+            onError={() => setImageSrc("/jersey_logo.png")}
           />
           <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
             {product.isFeatured ? (

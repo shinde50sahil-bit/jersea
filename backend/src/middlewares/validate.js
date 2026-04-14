@@ -11,8 +11,19 @@ function validate(schema) {
     });
 
     if (!parsed.success) {
+      const flattened = parsed.error.flatten();
+      const fieldErrors = Object.entries(flattened.fieldErrors)
+        .flatMap(([field, errors]) =>
+          (errors || []).map((message) => `${field}: ${message}`)
+        )
+        .join(", ");
+
       return next(
-        new ApiError(400, "Validation failed", parsed.error.flatten())
+        new ApiError(
+          400,
+          fieldErrors ? `Validation failed: ${fieldErrors}` : "Validation failed",
+          flattened
+        )
       );
     }
 

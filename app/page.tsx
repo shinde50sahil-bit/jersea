@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Hero from "@/components/Hero";
 import FilterSidebar from "@/components/FilterSidebar";
@@ -26,6 +26,7 @@ const easeFlow = [0.25, 0.1, 0.25, 1];
 
 export default function HomePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -41,11 +42,12 @@ export default function HomePage() {
       subtotal: 0
     }
   });
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "All">(
-    "All"
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    searchParams.get("category")?.trim().toLowerCase() || "all"
   );
   const [selectedSize, setSelectedSize] = useState<ProductSize | "All">("All");
   const [sortBy, setSortBy] = useState<SortOption>("Newest");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -55,9 +57,13 @@ export default function HomePage() {
         setCatalogLoading(true);
         setCatalogError(null);
 
+        const categoryQuery =
+          selectedCategory === "all"
+            ? ""
+            : `&category=${encodeURIComponent(selectedCategory)}`;
         const data = await apiRequest<{
           data?: { products?: BackendProduct[] };
-        }>("/api/products?limit=1000");
+        }>(`/api/products?limit=1000${categoryQuery}`);
 
         if (!active) return;
 
@@ -82,7 +88,7 @@ export default function HomePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [selectedCategory]);
 
   useEffect(() => {
     const storedToken = getStoredToken();
@@ -137,6 +143,30 @@ export default function HomePage() {
     setStoreMessage("Logged out successfully.");
   }
 
+  function normalizeCategory(category: string) {
+    return category.trim().toLowerCase();
+  }
+
+  function handleCategoryChange(category: ProductCategory | "All") {
+    const nextCategory =
+      category === "All" ? "all" : normalizeCategory(category);
+
+    setSelectedCategory(nextCategory);
+
+    if (typeof window !== "undefined") {
+      const nextUrl =
+        nextCategory === "all"
+          ? "/"
+          : `/?category=${encodeURIComponent(nextCategory)}`;
+
+      window.location.assign(nextUrl);
+    }
+  }
+
+  function handleSizeChange(size: ProductSize | "All") {
+    setSelectedSize(size);
+  }
+
   async function handleAddToCart(productId: string, size: ProductSize) {
     if (!token) {
       router.push("/login?redirect=/");
@@ -169,17 +199,37 @@ export default function HomePage() {
     }
   }
 
+  const categories = useMemo(
+    () => ["Football", "NBA"],
+    []
+  );
+
   const visibleProducts = useMemo(() => {
-    const list = products.filter((product) => {
-      const categoryMatch =
-        selectedCategory === "All" || product.category === selectedCategory;
-      const sizeMatch =
-        selectedSize === "All" || product.sizes.includes(selectedSize);
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-      return categoryMatch && sizeMatch;
-    });
+    const sizeFilteredProducts =
+      selectedSize === "All"
+        ? products
+        : products.filter((product) => product.sizes.includes(selectedSize));
 
-    return [...list].sort((first, second) => {
+    const searchFilteredProducts = normalizedQuery
+      ? sizeFilteredProducts.filter((product) => {
+          const searchableContent = [
+            product.name,
+            product.category,
+            product.shortDescription,
+            product.description,
+            product.sku
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+          return searchableContent.includes(normalizedQuery);
+        })
+      : sizeFilteredProducts;
+
+    return [...searchFilteredProducts].sort((first, second) => {
       if (sortBy === "Price") {
         return first.price - second.price;
       }
@@ -188,15 +238,7 @@ export default function HomePage() {
         new Date(second.addedAt).getTime() - new Date(first.addedAt).getTime()
       );
     });
-  }, [products, selectedCategory, selectedSize, sortBy]);
-
-  const categories = useMemo(
-    () =>
-      Array.from(
-        new Set(products.map((product) => product.category).filter(Boolean))
-      ).sort((first, second) => first.localeCompare(second)),
-    [products]
-  );
+  }, [products, searchQuery, selectedSize, sortBy]);
 
   return (
     <motion.main
@@ -231,12 +273,20 @@ export default function HomePage() {
           <div className="grid gap-6 lg:grid-cols-[240px_1fr] lg:gap-6 xl:grid-cols-[250px_1fr]">
             <FilterSidebar
               categories={categories}
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
+              selectedCategory={
+                selectedCategory === "all"
+                  ? "All"
+                  : categories.find(
+                      (category) => normalizeCategory(category) === selectedCategory
+                    ) || "All"
+              }
+              onCategoryChange={handleCategoryChange}
               selectedSize={selectedSize}
-              onSizeChange={setSelectedSize}
+              onSizeChange={handleSizeChange}
               sortBy={sortBy}
               onSortChange={setSortBy}
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
             />
             <div>
               {catalogLoading ? (
@@ -253,6 +303,7 @@ export default function HomePage() {
 
               {!catalogLoading ? (
                 <ProductGrid
+                  key={`${selectedCategory}-${selectedSize}-${sortBy}`}
                   products={visibleProducts}
                   addingProductId={addingProductId}
                   onAddToCart={handleAddToCart}

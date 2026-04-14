@@ -24,7 +24,7 @@ const optionalDescriptionSchema = z.preprocess((value) => {
   }
 
   return value;
-}, z.string().min(20).optional());
+}, z.string().min(3).max(5000).optional());
 const imageUrlSchema = z.string().trim().refine((value) => {
   if (isStoredImagePath(value)) {
     return true;
