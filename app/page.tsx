@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Hero from "@/components/Hero";
-import FilterSidebar from "@/components/FilterSidebar";
 import ProductGrid from "@/components/ProductGrid";
 import StoreHeader from "@/components/StoreHeader";
 import {
@@ -51,30 +50,23 @@ export default function HomePage() {
 
   useEffect(() => {
     let active = true;
-
     async function loadProducts() {
       try {
         setCatalogLoading(true);
         setCatalogError(null);
-
         const categoryQuery =
           selectedCategory === "all"
             ? ""
             : `&category=${encodeURIComponent(selectedCategory)}`;
-        const data = await apiRequest<{
-          data?: { products?: BackendProduct[] };
-        }>(`/api/products?limit=1000${categoryQuery}`);
-
+        const data = await apiRequest<{ data?: { products?: BackendProduct[] } }>(
+          `/api/products?limit=1000${categoryQuery}`
+        );
         if (!active) return;
-
         setProducts((data.data?.products || []).map(normalizeProduct));
       } catch (loadError) {
         if (!active) return;
-
         setCatalogError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Unable to connect to backend"
+          loadError instanceof Error ? loadError.message : "Unable to connect to backend"
         );
       } finally {
         if (active) {
@@ -82,9 +74,7 @@ export default function HomePage() {
         }
       }
     }
-
     loadProducts();
-
     return () => {
       active = false;
     };
@@ -93,42 +83,28 @@ export default function HomePage() {
   useEffect(() => {
     const storedToken = getStoredToken();
     if (!storedToken) return;
-
     setToken(storedToken);
   }, []);
 
   useEffect(() => {
     if (!token) return;
-
     async function loadSession() {
       try {
-        const [meResponse, cartResponse, addressesResponse, ordersResponse] =
-          await Promise.all([
-            apiRequest<{ data: { user: AuthUser } }>("/api/auth/me", { token }),
-            apiRequest<{ data: CartState }>("/api/cart", { token }),
-            Promise.resolve({ data: { addresses: [] } }),
-            Promise.resolve({ data: { orders: [] } })
-          ]);
-
+        const [meResponse, cartResponse] = await Promise.all([
+          apiRequest<{ data: { user: AuthUser } }>("/api/auth/me", { token }),
+          apiRequest<{ data: CartState }>("/api/cart", { token })
+        ]);
         setUser(meResponse.data.user);
         setCart(cartResponse.data);
-        void addressesResponse;
-        void ordersResponse;
         setStoreError(null);
       } catch (error) {
         clearStoredToken();
         setToken(null);
         setUser(null);
-        setCart({
-          items: [],
-          summary: { itemCount: 0, subtotal: 0 }
-        });
-        setStoreError(
-          error instanceof Error ? error.message : "Session expired"
-        );
+        setCart({ items: [], summary: { itemCount: 0, subtotal: 0 } });
+        setStoreError(error instanceof Error ? error.message : "Session expired");
       }
     }
-
     loadSession();
   }, [token]);
 
@@ -136,10 +112,7 @@ export default function HomePage() {
     clearStoredToken();
     setToken(null);
     setUser(null);
-    setCart({
-      items: [],
-      summary: { itemCount: 0, subtotal: 0 }
-    });
+    setCart({ items: [], summary: { itemCount: 0, subtotal: 0 } });
     setStoreMessage("Logged out successfully.");
   }
 
@@ -150,15 +123,10 @@ export default function HomePage() {
   function handleCategoryChange(category: ProductCategory | "All") {
     const nextCategory =
       category === "All" ? "all" : normalizeCategory(category);
-
     setSelectedCategory(nextCategory);
-
     if (typeof window !== "undefined") {
       const nextUrl =
-        nextCategory === "all"
-          ? "/"
-          : `/?category=${encodeURIComponent(nextCategory)}`;
-
+        nextCategory === "all" ? "/" : `/?category=${encodeURIComponent(nextCategory)}`;
       window.location.assign(nextUrl);
     }
   }
@@ -172,46 +140,32 @@ export default function HomePage() {
       router.push("/login?redirect=/");
       return;
     }
-
     try {
       setAddingProductId(productId);
       setStoreError(null);
       setStoreMessage(null);
-
       const response = await apiRequest<{ data: CartState }>("/api/cart/items", {
         method: "POST",
         token,
-        body: JSON.stringify({
-          productId,
-          size,
-          quantity: 1
-        })
+        body: JSON.stringify({ productId, size, quantity: 1 })
       });
-
       setCart(response.data);
       setStoreMessage("Item added to cart.");
     } catch (error) {
-      setStoreError(
-        error instanceof Error ? error.message : "Could not add to cart"
-      );
+      setStoreError(error instanceof Error ? error.message : "Could not add to cart");
     } finally {
       setAddingProductId(null);
     }
   }
 
-  const categories = useMemo(
-    () => ["Football", "NBA"],
-    []
-  );
+  const categories = useMemo(() => ["Football", "NBA"], []);
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-
     const sizeFilteredProducts =
       selectedSize === "All"
         ? products
         : products.filter((product) => product.sizes.includes(selectedSize));
-
     const searchFilteredProducts = normalizedQuery
       ? sizeFilteredProducts.filter((product) => {
           const searchableContent = [
@@ -224,19 +178,14 @@ export default function HomePage() {
             .filter(Boolean)
             .join(" ")
             .toLowerCase();
-
           return searchableContent.includes(normalizedQuery);
         })
       : sizeFilteredProducts;
-
     return [...searchFilteredProducts].sort((first, second) => {
       if (sortBy === "Price") {
         return first.price - second.price;
       }
-
-      return (
-        new Date(second.addedAt).getTime() - new Date(first.addedAt).getTime()
-      );
+      return new Date(second.addedAt).getTime() - new Date(first.addedAt).getTime();
     });
   }, [products, searchQuery, selectedSize, sortBy]);
 
@@ -248,7 +197,6 @@ export default function HomePage() {
       className="min-h-screen bg-jersea-bg text-white"
     >
       <Hero />
-
       <section id="marketplace" className="relative">
         <div className="pointer-events-none absolute inset-x-0 -top-16 h-20 bg-gradient-to-b from-transparent to-[#0A0A0A]" />
         <div className="mx-auto max-w-[1560px] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
@@ -257,59 +205,36 @@ export default function HomePage() {
             cartCount={cart.summary.itemCount}
             onLogout={handleLogout}
           />
-
-          {storeMessage ? (
+          {storeMessage && (
             <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
               {storeMessage}
             </div>
-          ) : null}
-
-          {storeError ? (
+          )}
+          {storeError && (
             <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
               {storeError}
             </div>
-          ) : null}
-
-          <div className="grid gap-6 lg:grid-cols-[240px_1fr] lg:gap-6 xl:grid-cols-[250px_1fr]">
-            <FilterSidebar
-              categories={categories}
-              selectedCategory={
-                selectedCategory === "all"
-                  ? "All"
-                  : categories.find(
-                      (category) => normalizeCategory(category) === selectedCategory
-                    ) || "All"
-              }
-              onCategoryChange={handleCategoryChange}
-              selectedSize={selectedSize}
-              onSizeChange={handleSizeChange}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
-            />
-            <div>
-              {catalogLoading ? (
-                <div className="rounded-2xl border border-white/10 bg-jersea-surface p-8 text-center text-jersea-muted">
-                  Loading products from backend...
-                </div>
-              ) : null}
-
-              {catalogError ? (
-                <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-                  {catalogError}
-                </div>
-              ) : null}
-
-              {!catalogLoading ? (
-                <ProductGrid
-                  key={`${selectedCategory}-${selectedSize}-${sortBy}`}
-                  products={visibleProducts}
-                  addingProductId={addingProductId}
-                  onAddToCart={handleAddToCart}
-                />
-              ) : null}
-            </div>
+          )}
+          {/* Main content without sidebar */}
+          <div className="grid gap-6">
+            {catalogLoading && (
+              <div className="rounded-2xl border border-white/10 bg-jersea-surface p-8 text-center text-jersea-muted">
+                Loading products from backend...
+              </div>
+            )}
+            {catalogError && (
+              <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                {catalogError}
+              </div>
+            )}
+            {!catalogLoading && (
+              <ProductGrid
+                key={`${selectedCategory}-${selectedSize}-${sortBy}`}
+                products={visibleProducts}
+                addingProductId={addingProductId}
+                onAddToCart={handleAddToCart}
+              />
+            )}
           </div>
         </div>
       </section>
