@@ -1,5 +1,8 @@
 import { getApiBaseUrl } from "@/utils/api";
 
+const UPLOADS_BASE =
+  process.env.NEXT_PUBLIC_UPLOADS_URL?.replace(/\/$/, "") || "";
+
 export function resolveImageUrl(imageUrl: string) {
   if (!imageUrl) {
     return imageUrl;
@@ -15,8 +18,14 @@ export function resolveImageUrl(imageUrl: string) {
   }
 
   if (imageUrl.startsWith("/")) {
-    return `${getApiBaseUrl().replace(/\/$/, "")}${imageUrl}`;
+    // /uploads/ paths → Railway backend (where the files actually live)
+    // everything else → local API base
+    const base = imageUrl.startsWith("/uploads/")
+      ? UPLOADS_BASE || getApiBaseUrl().replace(/\/$/, "")
+      : getApiBaseUrl().replace(/\/$/, "");
+    return `${base}${imageUrl}`;
   }
 
   return imageUrl;
 }
+

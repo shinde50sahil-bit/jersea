@@ -43,29 +43,37 @@ export default function StoreHeader({
           Checkout
         </Link>
         {customerName ? (
-          <button
-            type="button"
-            onClick={onLogout}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-jersea-pink/50 hover:text-jersea-pink"
-          >
-            Logout
-          </button>
+          <>
+            <Link
+              href="/profile"
+              className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+            >
+              👤 Profile
+            </Link>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-jersea-pink/50 hover:text-jersea-pink"
+            >
+              Logout
+            </button>
+          </>
         ) : (
-          <Link
-            href="/login"
-            className="rounded-full bg-jersea-neonBlue px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-jersea-volt"
-          >
-            Login
-          </Link>
+          <>
+            <Link
+              href="/login"
+              className="rounded-full bg-jersea-neonBlue px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:bg-jersea-volt"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-jersea-pink/50 hover:text-jersea-pink"
+            >
+              Sign Up
+            </Link>
+          </>
         )}
-        {!customerName ? (
-          <Link
-            href="/signup"
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-jersea-pink/50 hover:text-jersea-pink"
-          >
-            Sign Up
-          </Link>
-        ) : null}
       </div>
     </div>
   );
